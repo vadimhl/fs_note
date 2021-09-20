@@ -1,6 +1,8 @@
 const express = require('express');
 const morgan = require('morgan');
 const app = express();
+const cors = require('cors');
+
 
 let persons = [
     { 
@@ -24,6 +26,7 @@ let persons = [
       "number": "39-23-6423122"
     }
 ];
+
 morgan.token('jsonpost', function (req, res) { 
     return JSON.stringify(req.body); 
 })
@@ -31,7 +34,8 @@ app.use(express.json());
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :jsonpost',
 {immediate:true}));
 app.use(morgan(':status :res[content-length] - :response-time ms :jsonpost'));
-
+app.use(express.static('build'));
+app.use(cors());
 
 app.get( '/api/persons', (req, resp) => {
     resp.json(persons);
@@ -54,7 +58,7 @@ app.get('/api/persons/:id', (req, resp) => {
 
 app.delete('/api/persons/:id', (req, resp) => {
     const id = Number(req.params.id);
-    persons = persons.filter( p => p.id === id);
+    persons = persons.filter( p => p.id !== id);
     resp.status(204).end();
 })
 
@@ -77,5 +81,5 @@ app.post('/api/persons', (req, resp) => {
 
 })
 
-const Port = 3001;
+const Port = 3000;
 app.listen( Port, () => (console.log('Listen on port ', Port)));
