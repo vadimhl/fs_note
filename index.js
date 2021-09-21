@@ -81,5 +81,5 @@ app.post('/api/persons', (req, resp) => {
 
 })
 
-const Port = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen( Port, () => (console.log('Listen on port ', Port)));
