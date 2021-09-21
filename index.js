@@ -1,5 +1,5 @@
 const express = require('express');
-const morgan = require('morgan');
+//const morgan = require('morgan');
 const app = express();
 const cors = require('cors');
 
@@ -27,13 +27,13 @@ let persons = [
     }
 ];
 
-morgan.token('jsonpost', function (req, res) { 
-    return JSON.stringify(req.body); 
-})
+//morgan.token('jsonpost', function (req, res) { 
+//    return JSON.stringify(req.body); 
+//})
 app.use(express.json());
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :jsonpost',
-{immediate:true}));
-app.use(morgan(':status :res[content-length] - :response-time ms :jsonpost'));
+//app.use(morgan(':method :url :status :res[content-length] - :response-time ms :jsonpost',
+//{immediate:true}));
+//app.use(morgan(':status :res[content-length] - :response-time ms :jsonpost'));
 app.use(express.static('build'));
 app.use(cors());
 
