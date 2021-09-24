@@ -1,85 +1,79 @@
 const express = require('express');
-//const morgan = require('morgan');
+const morgan = require('morgan');
 const app = express();
 const cors = require('cors');
+const Person = require('./models/Person');
 
 
-let persons = [
-    { 
-      "id": 1,
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": 2,
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": 3,
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": 4,
-      "name": "Mary Poppendieck", 
-      "number": "x39-23-6423122"
-    }
-];
-
-//morgan.token('jsonpost', function (req, res) { 
-//    return JSON.stringify(req.body); 
-//})
+morgan.token('jsonpost', function (req, res) { 
+    return JSON.stringify(req.body); 
+})
 app.use(express.json());
-//app.use(morgan(':method :url :status :res[content-length] - :response-time ms :jsonpost',
-//{immediate:true}));
-//app.use(morgan(':status :res[content-length] - :response-time ms :jsonpost'));
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :jsonpost',
+{immediate:true}));
+app.use(morgan(':status :res[content-length] - :response-time ms :jsonpost'));
 app.use(express.static('build'));
 app.use(cors());
 
-app.get( '/api/persons', (req, resp) => {
-    resp.json(persons);
-})
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
 
-app.get( '/info', (req, resp) => {
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } 
+  resp.status(400).json({ error: error.name, errMsg: error.message });
+}
+
+/*app.get( '/info', (req, resp) => {
     resp.send(`<div>Phonebook has info for ${persons.length} people.</div><br />
     <div>${new Date()}</div>`)
-})
+})*/
 
-app.get('/api/persons/:id', (req, resp) => {
-    const id = Number(req.params.id);
-    const person = persons.find( (p => p.id === id));
-    if ( person ) {
-        return resp.json(person);
-    } else {
-        return resp.status(404).send(`<h1>${id} - not found</h1>`);
-    }
-})
-
-app.delete('/api/persons/:id', (req, resp) => {
-    const id = Number(req.params.id);
-    persons = persons.filter( p => p.id !== id);
-    resp.status(204).end();
+app.get( '/api/persons', (req, resp) => {
+    Person.find({}).then( persons => {
+      resp.json(persons);
+    });
 })
 
 app.post('/api/persons', (req, resp) => {
-    let person = req.body;
-    if (!person.name) {
+
+    if (!req.body.name) {
         return resp.status(400).json({error:'name missing'})
     }
-    if (!person.number) {
+    if (!req.body.number) {
         return resp.status(400).json({error:'number missing'})
     }
-    if ( persons.find( p => p.name === person.name)) {
-        return resp.status(400).json({error:`${person.name} already exist`})
-    }
-    person.id = Math.trunc(Math.random()*10000);
+    //if ( persons.find( p => p.name === person.name)) {
+    //  return resp.status(400).json({error:`${person.name} already exist`})
+    //}
     
-    persons.push(person);
+    const person = new Person ({
+      name: req.body.name,
+      number: req.body.number,
+    })
+    person.save().then( savedPerson => resp.json(savedPerson));
     
-    resp.json(person);
-
 })
+app.delete('/api/persons/:id', (req, resp, next) => {
+    console.log(`id=${req.params.id}`);
+    Person.findByIdAndRemove(req.params.id)
+    .then( () => resp.status(204).end() )
+    .catch( error => next(error) )
+})
+app.get('/api/persons/:id', (req, resp, next) => {
+  
+    Person.findById(req.params.id)
+      .then( person => {
+        if (person) {
+          resp.json(person) 
+        } else {
+          resp.status(404).json({error: 'not found', errMsg: error.message});
+        }
+      })
+      .catch( error => next(error));
+ })
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 app.listen( PORT, () => (console.log('Listen on port ', PORT)));

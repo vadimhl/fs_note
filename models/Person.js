@@ -8,10 +8,10 @@ mongoose.connect(process.env.MONGO_PB, options).catch( error => console.log("-- 
 
 const personSchema = new mongoose.Schema({
   name: String,
-  number: Date,
+  number: String,
 })
 
-noteSchema.set('toJSON', {
+personSchema.set('toJSON', {
   transform: (document, returnedObject) => {
     returnedObject.id = returnedObject._id.toString()
     delete returnedObject._id
